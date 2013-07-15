@@ -26,6 +26,8 @@
 #define MIN_MINE	10
 #define MAX_MINE	668		//(MAX_ROW-1)*(MAX_COL-1)+1
 
+#define MAX_STR				128
+
 #define INIT_SUCCESS		0
 #define INIT_FAILED			-1
 #define EXIT_SUCCESS		0
@@ -51,7 +53,13 @@
 #define BATTLEFIELD_NLINES  MIN_ROW
 #define BATTLEFIELD_NCLOS	MIN_COL
 
+#define COORDINATES_Y		1
+#define COORDINATES_X		1
+
 #define TIMER_START			0U
+
+#define KEY_NONE			-1
+
 
 #define TRUE		1
 #define FALSE		0
@@ -66,8 +74,16 @@ enum color{
 	COLOR_FIVE,
 	COLOR_SIX,
 	COLOR_SEVEN,
-	COLOR_EIGHT,
-};			//set color for the number of markers mine
+	COLOR_EIGHT,	//set color for the number of markers mine
+	
+	COLOR_FLAG,
+	COLOR_UNKNOW,
+	COLOR_SAFE_MINE,
+	COLOR_UNSAFE_MINE,
+
+	COLOR_NORMAL_MSG,
+	COLOR_PROMPT_MSG,
+};			
 
 typedef struct value{
 	BOOL is_mine;	//According to the judge whether it's mine
@@ -90,9 +106,11 @@ typedef struct cross_grid{
 	int row_num;			//The number of the row of the rectangle
 	int col_num;			//The number of the column of the rectangle
 	int mine_num;			//Number of mines 
-	
+#if 0
 	grid_t *row_head;
 	grid_t *col_head;
+#endif						//It's no necessary to use two head node to point the cross list in this program.
+	grid_t *grid_head;	    //grid_head->down<=>row_head, grid_head->right<=>col_head
 }cross_grid_list_t;	//save information of all grid
 
 typedef struct battlefield{
@@ -103,6 +121,11 @@ typedef struct battlefield{
 	int begin_x;
 }battlefield_t;	//use for print to screen
 
+typedef struct coordinates{
+	int y;
+	int x;
+}coordinates_t;	//coordinates of the current focus
+
 typedef enum status{
 	STATUS_PAUSE,
 	STATUS_CONTINUING,
@@ -112,12 +135,15 @@ typedef enum status{
 typedef struct minesweeper{
 	cross_grid_list_t *cross_grid_list;	
 	battlefield_t *battlefield;	
+	coordinates_t coordinates;	
 	status_t status;
 	unsigned int timer;			//For timing (sec)
 	int cur_mine_num;			//Number of current mine
 }minesweeper_t;	
 
 int init_minesweeper(minesweeper_t **minesweeper);
+int key_event(minesweeper_t *minesweeper);
+coordinates_t mouse_event(minesweeper_t *minesweeper);
 void exit_minesweeper(minesweeper_t *minesweeper);
 #endif
 
