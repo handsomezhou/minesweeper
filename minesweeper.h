@@ -28,16 +28,13 @@
 
 #define MAX_STR				128
 
-#define INIT_SUCCESS		0
-#define INIT_FAILED			-1
-#define EXIT_SUCCESS		0
-#define EXIT_FAILED			-1
-#define FREE_SUCCESS		0
-#define FREE_FAILED			-1
+#define MSR_SUCCESS			0
+#define MSR_FAILED			-1
 
 #define CONTENT_FLAG		'F'
 #define CONTENT_MINE		'@'
 #define CONTENT_UNKNOW		'?'
+#define CONTENT_NONE		' '
 #define	CONTENT_ZERO		' '
 #define CONTENT_ONE			'1'
 #define CONTENT_TWO			'2'
@@ -59,6 +56,7 @@
 #define TIMER_START			0U
 
 #define KEY_NONE			-1
+//#define KEY_ENTER			10
 
 
 #define TRUE		1
@@ -83,12 +81,15 @@ enum color{
 
 	COLOR_NORMAL_MSG,
 	COLOR_PROMPT_MSG,
+	
+	COLOR_INPUT_INFO,
 };			
 
 typedef struct value{
 	BOOL is_mine;	//According to the judge whether it's mine
 	BOOL is_swept;	//According to the judge whether it's swept
-	char content;	//flag('F'),'?',mine('@') or number(' ','1'~'8')
+	char flag;		//The flag can be 'F' or '?' only when is_swept is equal to FALSE.
+	char content;	//mine('@') or number(' ','1'~'8')
 }value_t;
 
 typedef struct grid{

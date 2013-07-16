@@ -1,10 +1,16 @@
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "minesweeper.h"
 
 
 static int init_grid_head(grid_t **grid);
 static int init_grid(grid_t *grid_head, int row_num, int col_num);
+static int *set_mine_pos(int row_num, int col_num, int mine_num, int *pos);
+static BOOL is_in_pos(int *pos, int pos_len, int num);
+
+static int *sort_mine_pos(int *pos, int len);
+static int init_mine(grid_t *grid_head, int mine_num);
 void show_grid(grid_t *grid_head);	//just for test
 
 static void free_grid(grid_t *grid_head);
@@ -20,7 +26,8 @@ static void end_screen(void);
 
 static void draw_init_msg();
 static int get_cross_grid_set(cross_grid_list_t *cross_grid_list);
-static int set_cross_grid(cross_grid_list_t *cross_grid_list,int row, int col, int mine);
+static BOOL is_digit_str(const char *str);
+static int get_surround_mine_num(const grid_t *grid);
 
 static int init_grid_head(grid_t **grid)
 {
@@ -32,7 +39,7 @@ static int init_grid_head(grid_t **grid)
 
 	*gd=(grid_t *)malloc(sizeof(grid_t));
 	if(NULL==*gd){
-		return INIT_FAILED;
+		return MSR_FAILED;
 	}
 
 	(*gd)->row=0;
@@ -45,13 +52,13 @@ static int init_grid_head(grid_t **grid)
 	(*gd)->down=NULL;
 	(*gd)->left=NULL;
 	
-	return INIT_SUCCESS;
+	return MSR_SUCCESS;
 }
 
 static int init_grid(grid_t *grid_head, int row_num, int col_num)
 {
 	if(NULL==grid_head){
-		return INIT_FAILED;
+		return MSR_FAILED;
 	}
 	
 	grid_t *cur_row=grid_head;	//row_head
@@ -65,7 +72,7 @@ static int init_grid(grid_t *grid_head, int row_num, int col_num)
 	for(y=0; y<row; y++){
 		cur_row->down=(grid_t *)malloc(sizeof(grid_t));
 		if(NULL==cur_row->down){
-			return INIT_FAILED;
+			return MSR_FAILED;
 		}
 		
 		cur_row->down->up=cur_row;
@@ -91,10 +98,18 @@ static int init_grid(grid_t *grid_head, int row_num, int col_num)
 				}
 				cur_col->right->row=y;
 				cur_col->right->col=x;
+				cur_col->right->value.is_mine=FALSE;
+				cur_col->right->value.is_swept=FALSE;
+				cur_col->right->value.flag=CONTENT_NONE;
+				cur_col->right->value.flag=CONTENT_ZERO;
 				cur_col=cur_col->right;
 			}else{
 				cur_col->row=y;
 				cur_col->col=x;
+				cur_col->value.is_mine=FALSE;
+				cur_col->value.is_swept=FALSE;
+				cur_col->value.flag=CONTENT_NONE;
+				cur_col->value.content=CONTENT_ZERO;
 			}
 				
 		}	
@@ -113,11 +128,73 @@ static int init_grid(grid_t *grid_head, int row_num, int col_num)
 		prev_row=cur_row;
 	}
 	
-	return INIT_SUCCESS;
+	return MSR_SUCCESS;
+}
+
+static int *set_mine_pos(int row_num, int col_num, int mine_num, int *pos)
+{
+	int row=row_num;
+	int col=col_num;
+	int mine=mine_num;
+	int *p=pos;
+	int total=row*col;
+	int num;
+	int i=0;
+	BOOL bl;
+	do{
+		num=rand()%total;
+		bl=is_in_pos(p,mine_num,num);
+		if(FALSE==bl){
+			*(p+i)=num;
+			i++;
+		}
+		
+	}while((mine-i)!=0);
+
+	return p;
+	
+}
+
+static BOOL is_in_pos(int *pos, int pos_len, int num)
+{
+	int *p=pos;
+	int len=pos_len;
+	int n=num;
+	int i=0;
+	for(i=0; i<len; i++){
+		if(*(p+i)==-1){//pos init with -1
+			break;			
+		}else if(*(p+i)==n){
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+static int *sort_mine_pos(int *pos, int len)
+{
+
+	return NULL;
+}
+
+static int init_mine(grid_t *grid_head, int mine_num)
+{
+#if 0
+	grid_t *gh=grid_head;
+	int mn=mine_num;
+	if(NULL==gh||mn<0){
+		return MSR_FAILED;
+	}
+	char *p=malloc(mn+1);
+#endif
+	return 0;
 }
 
 void show_grid(grid_t *grid_head)
 {
+	//werase(stdscr);
+	//int y=1;
+	//int x=1;
 	grid_t *gh=grid_head;
 	do{
 		if(NULL==gh){
@@ -129,9 +206,12 @@ void show_grid(grid_t *grid_head)
 #if 1
 		for(cur_row=gh->down;cur_row!=NULL; cur_row=cur_row->down){
 			for(cur_col=cur_row; cur_col!=NULL; cur_col=cur_col->right){
-			printf("(%d,%d)",cur_col->row,cur_col->col);
+				printf("(%d,%d)",cur_col->row,cur_col->col);
+				//mvwprintw(stdscr,y,x,"%d-%d ",cur_col->row,cur_col->col);
+				//x +=5;
 			}
 			printf("\n");
+			//y++;
 		}
 #if 0	
 		for(cur_row=gh->down;cur_row!=NULL; cur_row=cur_row->down){
@@ -227,17 +307,18 @@ static int init_cross_grid_list(cross_grid_list_t **cross_grid_list)
 		(*cgl)->col_num=MIN_COL;
 		(*cgl)->mine_num=MIN_MINE;
 		ret=init_grid_head(&(*cgl)->grid_head);
-		if(INIT_FAILED==ret){
+		if(MSR_FAILED==ret){
 			break;
 		}
-		
+#if 0
 		//just for test
 		init_grid((*cgl)->grid_head,(*cgl)->row_num,(*cgl)->col_num);
 		show_grid((*cgl)->grid_head);
-		return INIT_SUCCESS;
+#endif
+		return MSR_SUCCESS;
 	}while(0);
 
-	return INIT_FAILED;
+	return MSR_FAILED;
 }
 
 static void free_cross_grid_list(cross_grid_list_t  *cross_grid_list)
@@ -265,7 +346,7 @@ static int init_battlefield(battlefield_t **battlefield)
 
 	*bf=(battlefield_t *)malloc(sizeof(battlefield_t));
 	if(NULL==*bf){
-		return INIT_FAILED;
+		return MSR_FAILED;
 	}
 	(*bf)->win=stdscr;
 	(*bf)->nlines=BATTLEFIELD_NLINES;
@@ -273,7 +354,7 @@ static int init_battlefield(battlefield_t **battlefield)
 	(*bf)->begin_y=BATTLEFIELD_BEGIN_Y;
 	(*bf)->begin_x=BATTLEFIELD_BEGIN_X;
 	
-	return INIT_SUCCESS;
+	return MSR_SUCCESS;
 }
 
 static void free_battlefield(battlefield_t *battlefield)
@@ -290,7 +371,7 @@ static int init_screen(cross_grid_list_t *cross_grid_list)
 {
 	cross_grid_list_t *cgl=cross_grid_list;
 	if(NULL==cgl){
-		return INIT_FAILED;
+		return MSR_FAILED;
 	}
 	initscr();
 	cbreak();
@@ -318,18 +399,40 @@ static int init_screen(cross_grid_list_t *cross_grid_list)
 
 		init_pair(COLOR_NORMAL_MSG,COLOR_YELLOW,COLOR_BLACK);
 		init_pair(COLOR_PROMPT_MSG,COLOR_RED,COLOR_BLACK);
+
+		init_pair(COLOR_INPUT_INFO,COLOR_GREEN,COLOR_BLACK);
 	}
 
-	nodelay(stdscr,TRUE);
+	nodelay(stdscr,FALSE);
 	keypad(stdscr,TRUE);
 	draw_init_msg();
 	get_cross_grid_set(cgl);
-	//box(stdscr,0,0);
-	wrefresh(stdscr);
-	nodelay(stdscr,FALSE);
-	wgetch(stdscr);
+	init_grid(cgl->grid_head,cgl->row_num,cgl->col_num);
 
-	return INIT_SUCCESS;
+	int *pos=(int *)malloc(cgl->mine_num);
+	int i=0;
+	for(i=0; i<cgl->mine_num; i++){
+		*(pos+i)=-1;
+	}
+	set_mine_pos(cgl->row_num,cgl->col_num,cgl->mine_num,pos);
+	int y=1;
+	int x=4;
+	werase(stdscr);
+	for(i=0; i<cgl->mine_num; i++){
+		mvwprintw(stdscr,y,x,"%d",*(pos+i));
+		x=x+4;
+		if(x/4==5){
+			x=4;
+			y++;
+		}
+	}
+	wrefresh(stdscr);
+	wgetch(stdscr);
+//	sort_mine_pos(pos);
+	
+	//init_mine(cgl);
+	
+	return MSR_SUCCESS;
 	
 }
 static void end_screen(void)
@@ -354,7 +457,7 @@ static void draw_init_msg()
 	char quit[]	 ="EXIT  :[q] [Q] [Esc]";
 	char help[]  ="HELP  :[h] [H]";
 	
-	char start[]="Press any key to start!";
+	char start[]="Press any key to continue!";
 	char prompt[]="The window is too small, Please set the window larger!";
 	int max_x;
 	int max_y;
@@ -363,7 +466,6 @@ static void draw_init_msg()
 	
 	getmaxyx(stdscr,max_y,max_x);
 	
-	nodelay(stdscr,FALSE);	
 	if(has_colors()){attron(COLOR_PAIR(COLOR_NORMAL_MSG)|A_BOLD);}
 	mvwprintw(stdscr,++y,(max_x-strlen(game_help))/2,"%s",game_help);
 	mvwprintw(stdscr,++y,x,"%s",direction);
@@ -380,16 +482,16 @@ static void draw_init_msg()
 	
 	box(stdscr,0,0);
 	if(has_colors()){attroff(COLOR_PAIR(COLOR_NORMAL_MSG)|A_BOLD);}
-	
+
+	if(has_colors()){attron(COLOR_PAIR(COLOR_PROMPT_MSG)|A_BOLD);}
 	mvwprintw(stdscr,++y,(max_x-strlen(start))/2,"%s",start);
 	if(y>=max_y-1){
-		if(has_colors()){attron(COLOR_PAIR(COLOR_PROMPT_MSG)|A_BOLD);}
+		
 		mvwprintw(stdscr,y/2,(max_x-strlen(prompt))/2,"%s",prompt);
-		if(has_colors()){attroff(COLOR_PAIR(COLOR_PROMPT_MSG)|A_BOLD);}
 	}
+	if(has_colors()){attroff(COLOR_PAIR(COLOR_PROMPT_MSG)|A_BOLD);}
 	wrefresh(stdscr);
 	wgetch(stdscr);	
-	nodelay(stdscr,TRUE);
 	
 }
 
@@ -397,13 +499,15 @@ static int get_cross_grid_set(cross_grid_list_t *cross_grid_list)
 {
 	cross_grid_list_t *cgl=cross_grid_list;
 	if(NULL==cgl){
-		return INIT_FAILED;
+		return MSR_FAILED;
 	}
-	
 	char prompt[]="Please set the minesweeper game  rows,columns and mine";
+	char range[MAX_STR/2];
 	char row[]  ="the number of row  :";
 	char col[]  ="the number of col  :";
 	char mines[]="the number of mines:";
+	char help[]="Please press any key to start!";
+	char result[MAX_STR/2];
 	char str_row[MAX_STR];
 	char str_col[MAX_STR];
 	char str_mines[MAX_STR];
@@ -411,53 +515,93 @@ static int get_cross_grid_set(cross_grid_list_t *cross_grid_list)
 	int max_x;
 	int y=0;
 	int x=1;
-	int ch;
+	int ty=0;
+	int tx=0;
+	int num;
+	snprintf(range,MAX_STR/2,"row[%d,%d],col[%d,%d],mines[%d,%d]",MIN_ROW,MAX_ROW,MIN_COL,MAX_COL,MIN_MINE,MAX_MINE);
 	getmaxyx(stdscr,max_y,max_x);
-
+	
 	werase(stdscr);
-	wrefresh(stdscr);
 	if(has_colors()){attron(COLOR_PAIR(COLOR_NORMAL_MSG)|A_BOLD);}
 	mvwprintw(stdscr,++y,(max_x-strlen(prompt))/2,"%s",prompt);
+	mvwprintw(stdscr,++y,(max_x-strlen(range))/2,range);
+	y++;
 	mvwprintw(stdscr,++y,x,"%s",row);
 	mvwprintw(stdscr,++y,x,"%s",col);
 	mvwprintw(stdscr,++y,x,"%s",mines);
-	if(has_colors()){attroff(COLOR_PAIR(COLOR_NORMAL_MSG)|A_BOLD);}
 	box(stdscr,0,0);
-	nodelay(stdscr,FALSE);
-	do{
-#if 0
-		memset(str_row,0,sizeof(str_row));
-		mvwgetnstr(stdscr,y-2,x+strlen(row),str_row,MAX_STR);
-		mvwgetnstr(stdscr,y-1,x+strlen(col),str_col,MAX_STR);
-		mvwgetnstr(stdscr,y-0,x+strlen(mines),str_mines,MAX_STR);
-#endif
-	}while(0);
-//	mvwin(stdscr,y-2,x+strlen(row));
-//	mvwgetnstr(stdscr,y-2,x+strlen(row),str_row,MAX_STR);
+	if(has_colors()){attroff(COLOR_PAIR(COLOR_NORMAL_MSG)|A_BOLD);}
 	
-//while(ch=wgetch(stdscr))
-	
-	//mvprintw(stdscr,);
+	ty=y-2;
+	tx=x+strlen(row);
+	if(has_colors()){attron(COLOR_PAIR(COLOR_INPUT_INFO)|A_BOLD);}
+
+	memset(str_row,0,sizeof(str_row));
+	mvwgetnstr(stdscr,ty,tx,str_row,MAX_STR);
+	if(is_digit_str(str_row)==TRUE){
+		num=atoi(str_row);
+		num=(num>=MIN_ROW&&num<=MAX_ROW)?(num):(MIN_ROW);
+	}else{
+		num=MIN_ROW;
+	}
+	cgl->row_num=num;
+
+	memset(str_col,0,sizeof(str_col));
+	mvwgetnstr(stdscr,ty+1,tx,str_col,MAX_STR);
+	if(is_digit_str(str_col)==TRUE){
+		num=atoi(str_col);
+		num=(num>=MIN_COL&&num<=MAX_COL)?(num):(MIN_COL);
+	}else{
+		num=MIN_COL;
+	}
+	cgl->col_num=num;
+
+	memset(str_mines,0,sizeof(str_mines));
+	mvwgetnstr(stdscr,ty+2,tx,str_mines,MAX_STR);
+	if(is_digit_str(str_mines)==TRUE){
+		num=atoi(str_mines);
+		num=(num>=MIN_MINE&&num<=(cgl->row_num-1)*(cgl->col_num-1)+1)?(num):\
+			(rand()%(((cgl->row_num-1)*(cgl->col_num-1)+1)-MIN_MINE+1)+MIN_MINE);
+	}else{
+		num=rand()%(((cgl->row_num-1)*(cgl->col_num-1)+1)-MIN_MINE+1)+MIN_MINE;
+
+	}
+	cgl->mine_num=num;
+
+	snprintf(result,MAX_STR/2,"Your settings:row=[%d],col=[%d],mines=[%d]",\
+		cgl->row_num,cgl->col_num,cgl->mine_num);
+	mvwprintw(stdscr,max_y/2,(max_x-strlen(result))/2,"%s",result);
+	if(has_colors()){attroff(COLOR_PAIR(COLOR_INPUT_INFO)|A_BOLD);}
+
+	if(has_colors()){attron(COLOR_PAIR(COLOR_PROMPT_MSG)|A_BOLD);}
+	mvwprintw(stdscr,max_y/2+1,(max_x-strlen(help))/2,"%s",help);
+	if(has_colors()){attron(COLOR_PAIR(COLOR_PROMPT_MSG)|A_BOLD);}
 	
 	wgetch(stdscr);
-	nodelay(stdscr,TRUE);
-
-	return INIT_SUCCESS;
-}
-
-static int set_cross_grid(cross_grid_list_t *cross_grid_list,int row, int col, int mine)
-{
-	cross_grid_list_t *cgl=cross_grid_list;
-	if(NULL==cgl){
-		return INIT_FAILED;
-	}
-	cgl->row_num=row;
-	cgl->col_num=col;
-	cgl->mine_num=mine;
 	
-	return INIT_SUCCESS;
+	return MSR_SUCCESS;
 }
 
+static BOOL is_digit_str(const char *str)
+{
+	const char *p=str;
+	if(NULL==p){
+		return FALSE;
+	}
+	while(*p!='\0'){
+		if(*p>'9'||*p<'0'){
+			return FALSE;
+		}
+		p++;
+	}
+
+	return TRUE;
+}
+
+static int get_surround_mine_num(const grid_t *grid)
+{
+	return 0;
+}
 
 int init_minesweeper(minesweeper_t **minesweeper)
 {
@@ -483,24 +627,24 @@ int init_minesweeper(minesweeper_t **minesweeper)
 		(*msr)->status=STATUS_PAUSE;
 		
 		ret=init_cross_grid_list(&(*msr)->cross_grid_list);
-		if(ret==INIT_FAILED){
+		if(ret==MSR_FAILED){
 			break;
 		}
 
 		ret=init_screen((*msr)->cross_grid_list);
-		if(INIT_FAILED==ret){
+		if(MSR_FAILED==ret){
 			break;
 		}
 		
 		ret=init_battlefield(&(*msr)->battlefield);
-		if(INIT_FAILED==ret){
+		if(MSR_FAILED==ret){
 			break;
 		}
 
-		return INIT_SUCCESS;
+		return MSR_SUCCESS;
 	}while(0);
 
-	return INIT_FAILED;
+	return MSR_FAILED;
 	
 }
 
@@ -523,11 +667,14 @@ void exit_minesweeper(minesweeper_t *minesweeper)
 
 		free_battlefield(msr->battlefield);
 		msr->battlefield=NULL;
-		
-		free_cross_grid_list(msr->cross_grid_list);
-		msr->cross_grid_list=NULL;
 
 		end_screen();
+#if 0	//just for test
+		show_grid(msr->cross_grid_list->grid_head);
+		getch();
+#endif
+		free_cross_grid_list(msr->cross_grid_list);
+		msr->cross_grid_list=NULL;
 		
 		free(msr);
 		msr=NULL;
