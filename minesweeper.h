@@ -31,31 +31,50 @@
 #define MSR_SUCCESS			0
 #define MSR_FAILED			-1
 
-#define CONTENT_FLAG		'F'
-#define CONTENT_MINE		'@'
-#define CONTENT_UNKNOW		'?'
-#define CONTENT_NONE		' '
-#define	CONTENT_ZERO		' '
-#define CONTENT_ONE			'1'
-#define CONTENT_TWO			'2'
-#define CONTENT_THREE		'3'
-#define CONTENT_FOUR		'4'
-#define CONTENT_FIVE		'5'
-#define CONTENT_SIX			'6'
-#define CONTENT_SEVEN		'7'
-#define CONTENT_EIGHT		'8'
+#define FLAG_MINE			'F'
+#define FLAG_UNKNOW			'?'
+#define FLAG_NONE			'*'
+
+#define MINE_PAINT_SAFE_NINE	'@' 
+#define MINE_PAINT_UNSAFE_MINE	'X'
+
+
+//Calculate the number of Mine around
+#define MINE_NUM_ZERO		0
+#define MINE_NUM_ONE		1
+#define MINE_NUM_TWO		2
+#define MINE_NUM_THREE		3
+#define MINE_NUM_FOUR		4
+#define MINE_NUM_FIVE		5
+#define MINE_NUM_SIX		6
+#define MINE_NUM_SEVEN		7
+#define MINE_NUM_EIGHT		8
+#define MINE_NUM_NINE		9	//it never be 9,it means itself is mines.
+
+#define	MINE_PAINT_ZERO			' '	
+#define MINE_PAINT_ONE			'1'
+#define MINE_PAINT_TWO			'2'
+#define MINE_PAINT_THREE		'3'
+#define MINE_PAINT_FOUR			'4'
+#define MINE_PAINT_FIVE			'5'
+#define MINE_PAINT_SIX			'6'
+#define MINE_PAINT_SEVEN		'7'
+#define MINE_PAINT_EIGHT		'8'
+#define MINE_PAINT_NINE			MINE_PAINT_SAFE_NINE
+
+
+
 
 #define BATTLEFIELD_BEGIN_Y	0
 #define BATTLEFIELD_BEGIN_X	0
 #define BATTLEFIELD_NLINES  MIN_ROW
 #define BATTLEFIELD_NCLOS	MIN_COL
 
-#define COORDINATES_Y		1
-#define COORDINATES_X		1
-
 #define TIMER_START			0U
 
 #define KEY_NONE			-1
+#define MOUSE_NON_VALID_X	-1
+#define MOUSE_NON_VALID_Y	-1
 //#define KEY_ENTER			10
 
 
@@ -74,8 +93,10 @@ enum color{
 	COLOR_SEVEN,
 	COLOR_EIGHT,	//set color for the number of markers mine
 	
-	COLOR_FLAG,
+	COLOR_MINE,
 	COLOR_UNKNOW,
+	COLOR_NONE,
+	
 	COLOR_SAFE_MINE,
 	COLOR_UNSAFE_MINE,
 
@@ -83,13 +104,16 @@ enum color{
 	COLOR_PROMPT_MSG,
 	
 	COLOR_INPUT_INFO,
+
+	COLOR_BACKGROUND,
 };			
 
 typedef struct value{
 	BOOL is_mine;	//According to the judge whether it's mine
 	BOOL is_swept;	//According to the judge whether it's swept
-	char flag;		//The flag can be 'F' or '?' only when is_swept is equal to FALSE.
-	char content;	//mine('@') or number(' ','1'~'8')
+	char flag;		//The flag can be 'F','f' or '?' only when is_swept is equal to FALSE.
+	char paint;		//mine('@') or number(' ','1'~'8')
+	int mine_num;	//mine number 
 }value_t;
 
 typedef struct grid{
@@ -121,12 +145,12 @@ typedef struct battlefield{
 	int begin_y;
 	int begin_x;
 }battlefield_t;	//use for print to screen
-
+#if 0  //just for test
 typedef struct coordinates{
 	int y;
 	int x;
 }coordinates_t;	//coordinates of the current focus
-
+#endif
 typedef enum status{
 	STATUS_PAUSE,
 	STATUS_CONTINUING,
@@ -136,15 +160,16 @@ typedef enum status{
 typedef struct minesweeper{
 	cross_grid_list_t *cross_grid_list;	
 	battlefield_t *battlefield;	
-	coordinates_t coordinates;	
+	MEVENT mevent;	
 	status_t status;
 	unsigned int timer;			//For timing (sec)
 	int cur_mine_num;			//Number of current mine
 }minesweeper_t;	
 
 int init_minesweeper(minesweeper_t **minesweeper);
-int key_event(minesweeper_t *minesweeper);
-coordinates_t mouse_event(minesweeper_t *minesweeper);
+void paint_minesweeper(minesweeper_t *minesweeper);
+int handle_minesweeper(minesweeper_t *minesweeper);
+MEVENT mouse_event(battlefield_t *battlefield);
 void exit_minesweeper(minesweeper_t *minesweeper);
 #endif
 
