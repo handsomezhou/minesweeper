@@ -30,6 +30,10 @@ static void free_battlefield(battlefield_t *battlefield);
 //Paint
 void clear_minesweeper();
 void draw_minesweeper(const minesweeper_t *minesweeper_t);
+//just for test
+void draw_test(const grid_t *grid_head);
+
+
 
 //Handle
 grid_t *get_grid(const grid_t *grid_head, int row, int col);
@@ -984,6 +988,23 @@ void draw_minesweeper(const minesweeper_t *minesweeper)
 	
 }
 
+void draw_test(const grid_t *grid_head)
+{
+	const grid_t *gh=grid_head;
+	grid_t *cur_row=NULL;
+	grid_t *cur_col=NULL;
+	int y=1;
+	int x=1;
+	if(has_colors()){attron(COLOR_PAIR(COLOR_INPUT_INFO)|A_BOLD);}
+	for(cur_row=gh->down;cur_row!=NULL; cur_row=cur_row->down,y++,x=1){
+		for(cur_col=cur_row; cur_col!=NULL; cur_col=cur_col->right,x++){
+			mvwprintw(stdscr,y,x,"%c",cur_col->value.paint);
+		}
+	}
+	if(has_colors()){attroff(COLOR_PAIR(COLOR_INPUT_INFO)|A_BOLD);}
+	wrefresh(stdscr);
+}
+
 grid_t *get_grid(const grid_t *grid_head,const int row, const int col)
 {
 	const grid_t *gd=grid_head;
@@ -1027,9 +1048,9 @@ int deal_btn1_event(grid_t *grid, minesweeper_t *minesweeper)
 		if(gd->value.flag!=FLAG_NONE){
 			return MSR_SUCCESS;
 		}
-		
+		gd->value.is_swept=TRUE;
 		if(gd->value.is_mine==TRUE){
-			gd->value.is_swept=TRUE;
+			//gd->value.is_swept=TRUE;
 			gd->value.paint=MINE_PAINT_UNSAFE_MINE;
 			//Find all mines
 			for(cur_row=gh->down; cur_row!=NULL; cur_row=cur_row->down){
@@ -1043,7 +1064,6 @@ int deal_btn1_event(grid_t *grid, minesweeper_t *minesweeper)
 			}
 			msr->status=STATUS_OVER;
 		}else{
-			//gd->value.is_swept=TRUE;
 			traverse_grid(gd,msr->cross_grid_list->grid_head);
 		}
 	}
@@ -1082,104 +1102,109 @@ grid_t *traverse_grid(grid_t *grid,const grid_t *grid_head)
 	if(NULL==gd||gh==gd){
 		return NULL;
 	}
+	if(gd->value.mine_num!=MINE_NUM_ZERO){
+		return NULL;
+	}
+	gd->value.is_swept=TRUE;
+	BOOL around_mine=FALSE;
 
-	if(NULL!=gd->up){
-		if(gd->up->value.is_swept!=TRUE&&gd->up->value.flag!=FLAG_MINE){
-			if(gd->up->value.is_mine==TRUE){
-				gd->value.is_swept=TRUE;
-				return NULL;
-				//traverse_grid(NULL,gh);
-			}else{
-				traverse_grid(grid->up,gh);
-			}	
-		}
-
-		if(NULL!=gd->up->left){
-			if(gd->up->left->value.is_swept!=TRUE&&gd->up->left->value.flag!=FLAG_MINE){
-				if(gd->up->left->value.is_mine==TRUE){
-					gd->value.is_swept=TRUE;
-					return NULL;
-				}else{
-					traverse_grid(grid->up->left,gh);
+	if(around_mine==FALSE){
+		//continue to sweep other grid
+		if(NULL!=gd->up&&gh!=gd->up){
+			if(gd->up->value.is_swept!=TRUE&&gd->up->value.flag!=FLAG_MINE){
+				traverse_grid(gd->up,gh);
+			}
+			if(NULL!=gd->up->left&&gh!=gd->up->left){
+				if(gd->up->left->value.is_swept!=TRUE&&gd->up->left->value.flag!=FLAG_MINE){
+					traverse_grid(gd->up->left,gh);
 				}
 			}
-		}
-
-		if(NULL!=gd->up->right){
-			if(gd->up->right->value.is_swept!=TRUE&&gd->up->right->value.flag!=FLAG_MINE){
-				if(gd->up->right->value.is_mine==TRUE){
-					gd->value.is_swept=TRUE;
-					return NULL;
-				}else{
-					traverse_grid(grid->up->right,gh);
+			if(NULL!=gd->up->right){
+				if(gd->up->right->value.is_swept!=TRUE&&gd->up->right->value.flag!=FLAG_MINE){
+					traverse_grid(gd->up->right,gh);
 				}
 			}
-		}
-	}
-
-
-
-	if(NULL!=gd->left){
-		if(gd->left->value.is_swept!=TRUE&&gd->left->value.flag!=FLAG_MINE){
-			if(gd->left->value.is_mine==TRUE){
-				gd->value.is_swept=TRUE;
-				return NULL;
-			}else{
-				traverse_grid(grid->left,gh);
-			}	
-		}
-	}
-
-	if(NULL!=gd->right){
-		if(gd->right->value.is_swept!=TRUE&&gd->right->value.flag!=FLAG_MINE){
-			if(gd->right->value.is_mine==TRUE){
-				gd->value.is_swept=TRUE;
-				return NULL;
-			}else{
-				traverse_grid(grid->right,gh);
-			}	
-		}
-	}
-
-	if(NULL!=gd->down){
-		if(gd->down->value.is_swept!=TRUE&&gd->down->value.flag!=FLAG_MINE){
-			if(gd->down->value.is_mine==TRUE){
-				gd->value.is_swept=TRUE;
-				return NULL;
-			}else{
-				traverse_grid(grid->down,gh);
-			}	
+			
 		}
 
-		if(NULL!=gd->down->left){
-			if(gd->down->left->value.is_swept!=TRUE&&gd->down->left->value.flag!=FLAG_MINE){
-				if(gd->down->left->value.is_mine==TRUE){
-					gd->value.is_swept=TRUE;
-					return NULL;
-				}else{
-					traverse_grid(grid->down->left,gh);
-				}
-			}
-		}
-	
-		if(NULL!=gd->down->right){
-			if(gd->down->right->value.is_swept!=TRUE&&gd->down->right->value.flag!=FLAG_MINE){
-				if(gd->down->right->value.is_mine==TRUE){
-					gd->value.is_swept=TRUE;
-					return NULL;
-				}else{
-					traverse_grid(grid->down->right,gh);
-				}
+		if(NULL!=gd->left&&gh!=gd->left){
+			if(gd->left->value.is_swept!=TRUE&&gd->left->value.flag!=FLAG_MINE){
+				traverse_grid(gd->left,gh);
 			}
 		}
 		
+		if(NULL!=gd->right){
+			if(gd->right->value.is_swept!=TRUE&&gd->right->value.flag!=FLAG_MINE){
+				traverse_grid(gd->right,gh);
+			}
+		}
+
+		if(NULL!=gd->down){
+			if(gd->down->value.is_swept!=TRUE&&gd->down->value.flag!=FLAG_MINE){
+				traverse_grid(gd->down,gh);
+			}
+			if(NULL!=gd->down->left){
+				if(gd->down->left->value.is_swept!=TRUE&&gd->down->left->value.flag!=FLAG_MINE){
+					traverse_grid(gd->down->left,gh);
+				}
+			}
+			
+			if(NULL!=gd->down->right){
+				if(gd->down->right->value.is_swept!=TRUE&&gd->down->right->value.flag!=FLAG_MINE){
+					traverse_grid(gd->down->right,gh);
+				}
+			}
+			
+		}
+
+		//Set the surrounding grid swept
+		if(NULL!=gd->up&&gh!=gd->up){
+			if(gd->up->value.is_swept!=TRUE&&gd->up->value.flag!=FLAG_MINE){
+				gd->up->value.is_swept=TRUE;
+			}
+			if(NULL!=gd->up->left&&gh!=gd->up->left){
+				if(gd->up->left->value.is_swept!=TRUE&&gd->up->left->value.flag!=FLAG_MINE){
+					gd->up->left->value.is_swept=TRUE;
+				}
+			}
+			if(NULL!=gd->up->right){
+				if(gd->up->right->value.is_swept!=TRUE&&gd->up->right->value.flag!=FLAG_MINE){
+					gd->up->right->value.is_swept=TRUE;
+				}
+			}
+		}
+
+		if(NULL!=gd->left&&gh!=gd->left){
+			if(gd->left->value.is_swept!=TRUE&&gd->left->value.flag!=FLAG_MINE){
+				gd->left->value.is_swept=TRUE;
+			}
+		}
+		
+		if(NULL!=gd->right){
+			if(gd->right->value.is_swept!=TRUE&&gd->right->value.flag!=FLAG_MINE){
+				gd->right->value.is_swept=TRUE;
+			}
+		}
+
+		if(NULL!=gd->down){
+			if(gd->down->value.is_swept!=TRUE&&gd->down->value.flag!=FLAG_MINE){
+				gd->down->value.is_swept=TRUE;
+			}
+			if(NULL!=gd->down->left){
+				if(gd->down->left->value.is_swept!=TRUE&&gd->down->left->value.flag!=FLAG_MINE){
+					gd->down->left->value.is_swept=TRUE;
+				}
+			}
+			if(NULL!=gd->down->right){
+				if(gd->down->right->value.is_swept!=TRUE&&gd->down->right->value.flag!=FLAG_MINE){
+					gd->down->right->value.is_swept=TRUE;
+				}
+			}
+		}
+
 	}
-
 	
-	gd->value.is_swept=TRUE;
-
 	return NULL;
-	
 }
 
 void paint_minesweeper(minesweeper_t *minesweeper)
@@ -1191,6 +1216,8 @@ void paint_minesweeper(minesweeper_t *minesweeper)
 	clear_minesweeper();
 	
 	draw_minesweeper(msr);
+	draw_test(msr->cross_grid_list->grid_head);
+	
 }
 
 int handle_minesweeper(minesweeper_t *minesweeper)
