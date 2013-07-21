@@ -40,6 +40,8 @@ grid_t *get_grid(const grid_t *grid_head, int row, int col);
 int deal_btn1_event(grid_t *grid, minesweeper_t *minesweeper);
 int deal_btn2_event(grid_t *grid, minesweeper_t *minesweeper);
 grid_t *traverse_grid(grid_t *grid,const grid_t *grid_head);
+BOOL is_success_minesweeper(const grid_t *grid_head); 
+
 
 
 
@@ -1036,6 +1038,7 @@ int deal_btn1_event(grid_t *grid, minesweeper_t *minesweeper)
 	minesweeper_t *msr=minesweeper;
 	grid_t *cur_row=NULL;
 	grid_t *cur_col=NULL;
+	BOOL ret;
 	
 	if(NULL==gd||NULL==msr||NULL==msr->cross_grid_list||\
 		NULL==msr->cross_grid_list->grid_head){
@@ -1065,6 +1068,10 @@ int deal_btn1_event(grid_t *grid, minesweeper_t *minesweeper)
 			msr->status=STATUS_OVER;
 		}else{
 			traverse_grid(gd,msr->cross_grid_list->grid_head);
+			ret=is_success_minesweeper(msr->cross_grid_list->grid_head);
+			if(ret==TRUE){
+				msr->status=STATUS_OVER;
+			}
 		}
 	}
 	return MSR_SUCCESS;
@@ -1205,6 +1212,28 @@ grid_t *traverse_grid(grid_t *grid,const grid_t *grid_head)
 	}
 	
 	return NULL;
+}
+
+BOOL is_success_minesweeper(const grid_t *grid_head)
+{
+	const grid_t *gh=grid_head;
+	if(NULL==gh){
+		return FALSE;
+	}
+
+	grid_t *cur_row=NULL;
+	grid_t *cur_col=NULL;
+	for(cur_row=gh->down; cur_row!=NULL; cur_row=cur_row->down){
+		for(cur_col=cur_row; cur_col!=NULL; cur_col=cur_col->right){
+			if(cur_col->value.is_mine==FALSE){
+				if(cur_col->value.is_swept==FALSE){
+					return FALSE;
+				}
+			}
+		}
+	}
+
+	return TRUE;
 }
 
 void paint_minesweeper(minesweeper_t *minesweeper)

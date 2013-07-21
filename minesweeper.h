@@ -155,6 +155,7 @@ typedef enum status{
 	STATUS_PAUSE,
 	STATUS_CONTINUING,
 	STATUS_OVER,
+	STATUS_SUCCESS,
 }status_t;		//Status of the game 
 
 typedef struct minesweeper{
