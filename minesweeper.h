@@ -27,6 +27,7 @@
 #define MAX_MINE	668		//(MAX_ROW-1)*(MAX_COL-1)+1
 
 #define MAX_STR				128
+#define MAX_PLAY_TIME		999		//sec
 
 #define MSR_SUCCESS			0
 #define MSR_FAILED			-1
@@ -145,17 +146,12 @@ typedef struct battlefield{
 	int begin_y;
 	int begin_x;
 }battlefield_t;	//use for print to screen
-#if 0  //just for test
-typedef struct coordinates{
-	int y;
-	int x;
-}coordinates_t;	//coordinates of the current focus
-#endif
+
 typedef enum status{
-	STATUS_PAUSE,
-	STATUS_CONTINUING,
-	STATUS_OVER,
-	STATUS_SUCCESS,
+	STATUS_INIT,
+	STATUS_START,
+	STATUS_END_FAILED,
+	STATUS_END_SUCCESS,
 }status_t;		//Status of the game 
 
 typedef struct minesweeper{

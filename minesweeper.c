@@ -21,7 +21,6 @@ static int *sort_mine_pos(int *pos, int length);
 static void quick_sort(int *num, int left, int right);
 static int init_mine_pos(grid_t *grid_head, int mine_num, int *pos);
 static int get_surround_mine_num(grid_t *grid);
-void show_grid(grid_t *grid_head);	//just for test
 static void free_grid(grid_t *grid_head);
 static int init_battlefield(battlefield_t **battlefield, int row_num, int col_num);
 static void free_battlefield(battlefield_t *battlefield);
@@ -30,9 +29,10 @@ static void free_battlefield(battlefield_t *battlefield);
 //Paint
 void clear_minesweeper();
 void draw_minesweeper(const minesweeper_t *minesweeper_t);
-//just for test
-void draw_test(const grid_t *grid_head);
 
+#if 0
+void draw_mines(const grid_t *grid_head);	//just for test
+#endif
 
 
 //Handle
@@ -69,11 +69,7 @@ static int init_cross_grid_list(cross_grid_list_t **cross_grid_list)
 		if(MSR_FAILED==ret){
 			break;
 		}
-#if 0
-		//just for test
-		init_grid((*cgl)->grid_head,(*cgl)->row_num,(*cgl)->col_num);
-		show_grid((*cgl)->grid_head);
-#endif
+
 		return MSR_SUCCESS;
 	}while(0);
 
@@ -103,7 +99,6 @@ static int init_screen(cross_grid_list_t *cross_grid_list)
 	}
 	initscr();
 	cbreak();
-	//noecho();
 	curs_set(TRUE);
 	clear();
 
@@ -148,36 +143,8 @@ static int init_screen(cross_grid_list_t *cross_grid_list)
 		*(pos+i)=-1;
 	}
 	set_mine_pos(cgl->row_num,cgl->col_num,cgl->mine_num,pos);
-	int y=1;
-	int x=4;
-	werase(stdscr);
-	for(i=0; i<cgl->mine_num; i++){
-		mvwprintw(stdscr,y,x,"%d",*(pos+i));
-		x=x+4;
-		if(x/4==31){
-			x=4;
-			y++;
-		}
-	}
-	//wrefresh(stdscr);
 	
 	sort_mine_pos(pos,cgl->mine_num);
-	x=4;
-	y++;
-	for(i=0; i<cgl->mine_num; i++){
-		mvwprintw(stdscr,y,x,"%d",*(pos+i));
-		x=x+4;
-		if(x/4==31){
-			x=4;
-			y++;
-		}
-	}
-	y++;
-	x=4;
-	mvwprintw(stdscr,y,x,"I'm from %s()",__func__);
-	wrefresh(stdscr);
-	//free(pos);	
-	wgetch(stdscr);
 	
 	init_mine_pos(cgl->grid_head,cgl->mine_num,pos);
 	free(pos);
@@ -203,23 +170,12 @@ static void end_screen(void)
 
 static void draw_init_msg()
 {
-	char game_help[]="Minesweeper Game Help!";	
-	char direction[]="Direction key:";	
-	char key_up[]   ="UP   :[w] [W] [i] [I] [Arrow up]";	
-	char key_right[]="RIGHT:[d] [D] [l] [L] [Arrow right]";
-	char key_down[] ="DOWN :[s] [S] [k] [K] [Arrow down]";	
-	char key_left[] ="LEFT :[a] [A] [j] [J] [Arrow left]";
-
-	char flag[]	 = "FLAG  :[f] [F]";
-	char unknow[]= "UNKNOW:[?]";
-	char swept[] = "SWEPT :spacebar";	
-	
-	char pause[] ="PAUSE :[p] [P]";	
-	char quit[]	 ="EXIT  :[q] [Q] [Esc]";
-	char help[]  ="HELP  :[h] [H]";
+	char game_help[] ="Minesweeper Game Help!";	
+	char set_help[]  ="You can set the length and width of the grid,\n and set the number of mine!";
+	char mouse_btn1[]="mouse button 1:Click to reveal where no mine";
+	char mouse_btn2[]="mouse button 2:Click to mark a grid by using a graph 'F' or '?',\n\t\t'F' indicates mine,'?' indicates unknow!";
 	
 	char start[]="Press any key to continue!";
-	char prompt[]="The window is too small, Please set the window larger!";
 	int max_x;
 	int max_y;
 	int y=0;
@@ -229,28 +185,20 @@ static void draw_init_msg()
 	
 	if(has_colors()){attron(COLOR_PAIR(COLOR_NORMAL_MSG)|A_BOLD);}
 	mvwprintw(stdscr,++y,(max_x-strlen(game_help))/2,"%s",game_help);
-	mvwprintw(stdscr,++y,x,"%s",direction);
-	mvwprintw(stdscr,++y,x,"\t%s",key_up);
-	mvwprintw(stdscr,++y,x,"\t%s",key_right);
-	mvwprintw(stdscr,++y,x,"\t%s",key_down);
-	mvwprintw(stdscr,++y,x,"\t%s",key_left);
-	mvwprintw(stdscr,++y,x,"%s",flag);
-	mvwprintw(stdscr,++y,x,"%s",unknow);
-	mvwprintw(stdscr,++y,x,"%s",swept);
-	mvwprintw(stdscr,++y,x,"%s",pause);
-	mvwprintw(stdscr,++y,x,"%s",quit);
-	mvwprintw(stdscr,++y,x,"%s",help);
-	
-	box(stdscr,0,0);
+	y++;
+	mvwprintw(stdscr,++y,x,"%s",set_help);
+	y++;
+	mvwprintw(stdscr,++y,x,"%s",mouse_btn1);
+	mvwprintw(stdscr,++y,x,"%s",mouse_btn2);
+	y+=2;
 	if(has_colors()){attroff(COLOR_PAIR(COLOR_NORMAL_MSG)|A_BOLD);}
 
-	if(has_colors()){attron(COLOR_PAIR(COLOR_PROMPT_MSG)|A_BOLD);}
-	mvwprintw(stdscr,++y,(max_x-strlen(start))/2,"%s",start);
-	if(y>=max_y-1){
-		
-		mvwprintw(stdscr,y/2,(max_x-strlen(prompt))/2,"%s",prompt);
-	}
-	if(has_colors()){attroff(COLOR_PAIR(COLOR_PROMPT_MSG)|A_BOLD);}
+	if(has_colors()){attron(COLOR_PAIR(COLOR_INPUT_INFO)|A_BOLD);}
+	
+	mvwprintw(stdscr,((max_y/2)>y)?(max_y/2):(y),(max_x-strlen(start))/2,"%s",start);
+	box(stdscr,0,0);
+	if(has_colors()){attroff(COLOR_PAIR(COLOR_INPUT_INFO)|A_BOLD);}
+
 	wrefresh(stdscr);
 	wgetch(stdscr);	
 	
@@ -662,83 +610,6 @@ static int get_surround_mine_num(grid_t *grid)
 	return gd->value.mine_num;
 }
 
-void show_grid(grid_t *grid_head)
-{
-	//werase(stdscr);
-	//int y=1;
-	//int x=1;
-	grid_t *gh=grid_head;
-	do{
-		if(NULL==gh){
-			break;
-		}
-
-		grid_t *cur_row=NULL;
-		grid_t *cur_col=NULL;
-#if 1
-		for(cur_row=gh->down;cur_row!=NULL; cur_row=cur_row->down){
-			for(cur_col=cur_row; cur_col!=NULL; cur_col=cur_col->right){
-				//if(cur_col->value.is_mine==TRUE){
-					//printf("(%d,%d)",cur_col->row,cur_col->col);
-					printf("(%c)",cur_col->value.paint);
-				//}else{
-				//	printf("(y,x)");
-				//}
-				
-				//mvwprintw(stdscr,y,x,"%d-%d ",cur_col->row,cur_col->col);
-				//x +=5;
-			}
-			printf("\n");
-			//y++;
-		}
-#if 0	
-		for(cur_row=gh->down;cur_row!=NULL; cur_row=cur_row->down){
-			for(cur_col=cur_row; cur_col!=NULL; cur_col=cur_col->right){
-				printf("[%9p] ",cur_col->up);
-			}
-			printf("\n");
-		}
-		printf("\n");
-		
-		for(cur_row=gh->down;cur_row!=NULL; cur_row=cur_row->down){
-			for(cur_col=cur_row; cur_col!=NULL; cur_col=cur_col->right){
-				printf("[%9p] ",cur_col->right);
-			}
-			printf("\n");
-		}
-		printf("\n");
-
-		for(cur_row=gh->down;cur_row!=NULL; cur_row=cur_row->down){
-			for(cur_col=cur_row; cur_col!=NULL; cur_col=cur_col->right){
-				printf("[%9p] ",cur_col->down);
-			}
-			printf("\n");
-		}
-		printf("\n");
-
-		for(cur_row=gh->down;cur_row!=NULL; cur_row=cur_row->down){
-			for(cur_col=cur_row; cur_col!=NULL; cur_col=cur_col->right){
-				printf("[%9p] ",cur_col->left);
-			}
-			printf("\n");
-		}
-#endif
-#else
-		for(cur_col=gh->right; cur_col!=NULL; cur_col=cur_col->right){
-			for(cur_row=cur_col;cur_row!=NULL; cur_row=cur_row->down){
-			
-			printf("(%d,%d)",cur_row->col,cur_row->row);
-			}
-			printf("\n");
-		}
-		printf("\n");
-#endif
-	}while(0);
-	
-	return;
-}
-
-
 static void free_grid(grid_t *grid_head)
 {
 	grid_t *gh=grid_head;
@@ -753,11 +624,8 @@ static void free_grid(grid_t *grid_head)
 	for(cur_row=gh->down; cur_row!=NULL; cur_row=cur_row->down){
 		for(cur_col=cur_row; cur_col!=NULL; cur_col=next_col){
 			next_col=cur_col->right;
-			//just for test
-			//printf("f:(%d,%d)",cur_col->row,cur_col->col);
 			free(cur_col);
 		}
-			//printf("\n");
 	}
 	gh->down=NULL;
 	gh->right=NULL;
@@ -819,7 +687,7 @@ int init_minesweeper(minesweeper_t **minesweeper)
 		(*msr)->mevent.x=MOUSE_NON_VALID_X;
 		(*msr)->cur_mine_num=MIN_MINE;
 		(*msr)->timer=TIMER_START;
-		(*msr)->status=STATUS_PAUSE;
+		(*msr)->status=STATUS_INIT;
 		
 		ret=init_cross_grid_list(&(*msr)->cross_grid_list);
 		if(ret==MSR_FAILED){
@@ -830,15 +698,12 @@ int init_minesweeper(minesweeper_t **minesweeper)
 		if(MSR_FAILED==ret){
 			break;
 		}
+		(*msr)->cur_mine_num=(*msr)->cross_grid_list->mine_num;
+		
 		werase(stdscr);
 		int row=(*msr)->cross_grid_list->row_num;
 		int col=(*msr)->cross_grid_list->col_num;
 		ret=init_battlefield(&(*msr)->battlefield,row,col);
-		box((*msr)->battlefield->win,0,0);
-//		box((*msr)->battlefield->win,'#','#');
-
-		wrefresh((*msr)->battlefield->win);
-		wgetch((*msr)->battlefield->win);
 		nodelay(stdscr,TRUE);
 		if(MSR_FAILED==ret){
 			break;
@@ -875,7 +740,6 @@ void draw_minesweeper(const minesweeper_t *minesweeper)
 	int x=0;
 	
 	if(has_colors()){attron(COLOR_PAIR(COLOR_BACKGROUND)|A_BOLD);}
-	mvwprintw(stdscr,23,2,"(%d,%d)",bf->nlines,bf->ncols);
 	for(y=bf->begin_y; y<bf->nlines+bf->begin_y; y++){
 		for(x=bf->begin_x; x<bf->ncols+bf->begin_x; x++){
 			if(x==bf->begin_x||(x==bf->ncols-1+bf->begin_x)||\
@@ -983,14 +847,18 @@ void draw_minesweeper(const minesweeper_t *minesweeper)
 	if(has_colors()){attron(COLOR_PAIR(COLOR_INPUT_INFO)|A_BOLD);}
 	mvwprintw(bf->win,bf->begin_y+bf->nlines-2,bf->begin_x+bf->ncols/2+1,"@%3d",msr->cur_mine_num);
 	if(has_colors()){attroff(COLOR_PAIR(COLOR_INPUT_INFO)|A_BOLD);}
-	box(stdscr,0,0);
-	if(has_colors()){attroff(COLOR_PAIR(COLOR_BACKGROUND)|A_BOLD);}
 	
+	if(has_colors()){attron(COLOR_PAIR(COLOR_INPUT_INFO)|A_BOLD);}
+	box(stdscr,0,0);
+	if(has_colors()){attroff(COLOR_PAIR(COLOR_INPUT_INFO)|A_BOLD);}
+	
+	wmove(stdscr,msr->mevent.y,msr->mevent.x);
 	wrefresh(bf->win);
 	
 }
 
-void draw_test(const grid_t *grid_head)
+#if 0
+void draw_mines(const grid_t *grid_head)
 {
 	const grid_t *gh=grid_head;
 	grid_t *cur_row=NULL;
@@ -1006,6 +874,7 @@ void draw_test(const grid_t *grid_head)
 	if(has_colors()){attroff(COLOR_PAIR(COLOR_INPUT_INFO)|A_BOLD);}
 	wrefresh(stdscr);
 }
+#endif
 
 grid_t *get_grid(const grid_t *grid_head,const int row, const int col)
 {
@@ -1053,7 +922,6 @@ int deal_btn1_event(grid_t *grid, minesweeper_t *minesweeper)
 		}
 		gd->value.is_swept=TRUE;
 		if(gd->value.is_mine==TRUE){
-			//gd->value.is_swept=TRUE;
 			gd->value.paint=MINE_PAINT_UNSAFE_MINE;
 			//Find all mines
 			for(cur_row=gh->down; cur_row!=NULL; cur_row=cur_row->down){
@@ -1065,12 +933,12 @@ int deal_btn1_event(grid_t *grid, minesweeper_t *minesweeper)
 					}
 				}
 			}
-			msr->status=STATUS_OVER;
+			msr->status=STATUS_END_FAILED;
 		}else{
 			traverse_grid(gd,msr->cross_grid_list->grid_head);
 			ret=is_success_minesweeper(msr->cross_grid_list->grid_head);
 			if(ret==TRUE){
-				msr->status=STATUS_OVER;
+				msr->status=STATUS_END_SUCCESS;
 			}
 		}
 	}
@@ -1245,8 +1113,10 @@ void paint_minesweeper(minesweeper_t *minesweeper)
 	clear_minesweeper();
 	
 	draw_minesweeper(msr);
-	draw_test(msr->cross_grid_list->grid_head);
-	
+#if 0
+	draw_mines(msr->cross_grid_list->grid_head);
+#endif
+
 }
 
 int handle_minesweeper(minesweeper_t *minesweeper)
@@ -1258,23 +1128,19 @@ int handle_minesweeper(minesweeper_t *minesweeper)
 	}
 	int row=msr->mevent.y-msr->battlefield->begin_y-1;
 	int col=msr->mevent.x-msr->battlefield->begin_x-1;
-
-	//just for test
-	mvwprintw(stdscr,0,0,"(%d,%d)",msr->mevent.y,msr->mevent.x);
-	mvwprintw(stdscr,1,0,"(%d,%d)",row,col);
-	wmove(stdscr,msr->mevent.y,msr->mevent.x);
 	
 	grid_t *gd=get_grid(msr->cross_grid_list->grid_head,row,col);
-	
-	if(gd!=NULL){
-		mvwprintw(stdscr,2,0,"(%d,%d)",gd->row,gd->col);
+	if(gd==NULL){
+		return MSR_FAILED;
 	}
+	
 	switch(mt->bstate){
 		case BUTTON1_RELEASED:
 		case BUTTON1_PRESSED:
 		case BUTTON1_CLICKED:
 		case BUTTON1_DOUBLE_CLICKED:
 		case BUTTON1_TRIPLE_CLICKED:
+			msr->status=STATUS_START;
 			deal_btn1_event(gd,msr);
 			break;
 	
@@ -1283,11 +1149,11 @@ int handle_minesweeper(minesweeper_t *minesweeper)
 		case BUTTON2_CLICKED:
 		case BUTTON2_DOUBLE_CLICKED:
 		case BUTTON2_TRIPLE_CLICKED:
+			msr->status=STATUS_START;
 			deal_btn2_event(gd,msr);
 			break;
 	}
-	//just for test
-	wrefresh(stdscr);
+	
 	return MSR_SUCCESS;
 }
 
@@ -1303,6 +1169,7 @@ MEVENT mouse_event(battlefield_t *battlefield)
 	}
 	
 	mousemask(ALL_MOUSE_EVENTS,NULL);
+	
 	ch=wgetch(bf->win);
 	if(-1!=ch){
 		if(KEY_MOUSE==ch){
@@ -1313,16 +1180,8 @@ MEVENT mouse_event(battlefield_t *battlefield)
 					bf->begin_x+1,"%s","getmouse event failed");	
 				if(has_colors()){attroff(COLOR_PAIR(COLOR_PROMPT_MSG)|A_BOLD);}
 			}else{
-#if 0	//just for test
-				mvwprintw(stdscr,0,0,"(%d,%d)",bf->begin_y+bf->nlines-2,\
-					bf->begin_x+1);	
-				mvwprintw(bf->win,\
-					bf->begin_y+bf->nlines-2,\
-					bf->begin_x+1,"(%d,%d)",mevent.y,mevent.x);
-#endif 
 				if(mevent.y>=bf->begin_y+1&&mevent.y<=bf->begin_y+bf->nlines-4&&\
 					mevent.x>=bf->begin_x+1&&mevent.x<=bf->begin_x+bf->ncols-2){
-					//mvwprintw(bf->win,2,1,"(%d,%d)",mevent.y-bf->begin_y-1,mevent.x-bf->begin_x-1);
 					wmove(bf->win,mevent.y,mevent.x);
 				}else{
 					mevent.x=MOUSE_NON_VALID_X;
@@ -1333,8 +1192,6 @@ MEVENT mouse_event(battlefield_t *battlefield)
 			}
 		}
 	}
-	//just for test
-	//wrefresh(bf->win);
 	
 	return mevent;
 }
@@ -1352,10 +1209,7 @@ void exit_minesweeper(minesweeper_t *minesweeper)
 		msr->battlefield=NULL;
 
 		end_screen();
-#if 0	//just for test
-		show_grid(msr->cross_grid_list->grid_head);
-		getch();
-#endif
+
 		free_cross_grid_list(msr->cross_grid_list);
 		msr->cross_grid_list=NULL;
 		
