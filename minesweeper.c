@@ -1113,6 +1113,7 @@ void paint_minesweeper(minesweeper_t *minesweeper)
 	clear_minesweeper();
 	
 	draw_minesweeper(msr);
+	
 #if 0
 	draw_mines(msr->cross_grid_list->grid_head);
 #endif
