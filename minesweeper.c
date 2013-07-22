@@ -25,15 +25,12 @@ static void free_grid(grid_t *grid_head);
 static int init_battlefield(battlefield_t **battlefield, int row_num, int col_num);
 static void free_battlefield(battlefield_t *battlefield);
 
-
 //Paint
 static void clear_minesweeper();
 static void draw_minesweeper(const minesweeper_t *minesweeper_t);
-
 #if 0
 static void draw_mines(const grid_t *grid_head);	//just for test
 #endif
-
 
 //Handle
 static grid_t *get_grid(const grid_t *grid_head, int row, int col);
@@ -41,10 +38,6 @@ static int deal_btn1_event(grid_t *grid, minesweeper_t *minesweeper);
 static int deal_btn2_event(grid_t *grid, minesweeper_t *minesweeper);
 static grid_t *traverse_grid(grid_t *grid,const grid_t *grid_head);
 static BOOL is_success_minesweeper(const grid_t *grid_head); 
-
-
-
-
 
 static int init_cross_grid_list(cross_grid_list_t **cross_grid_list)
 {
@@ -150,7 +143,6 @@ static int init_screen(cross_grid_list_t *cross_grid_list)
 	free(pos);
 	pos=NULL;
 
-
 	grid_t *cur_row=NULL;
 	grid_t *cur_col=NULL;
 
@@ -163,6 +155,7 @@ static int init_screen(cross_grid_list_t *cross_grid_list)
 	return MSR_SUCCESS;
 	
 }
+
 static void end_screen(void)
 {
 	endwin();
@@ -306,7 +299,6 @@ static BOOL is_digit_str(const char *str)
 
 	return TRUE;
 }
-
 
 static int init_grid_head(grid_t **grid)
 {
@@ -458,6 +450,7 @@ static BOOL is_in_pos(int *pos, int pos_len, int num)
 
 	return FALSE;
 }
+
 static int *sort_mine_pos(int *pos, int length)
 {
 	int *p=pos;
@@ -509,7 +502,6 @@ static void quick_sort(int *a, int left, int right)
 		quick_sort(p,m+1,right);
 	}
 }
-
 
 static int init_mine_pos(grid_t *grid_head, int mine_num, int *pos)
 {
@@ -632,7 +624,6 @@ static void free_grid(grid_t *grid_head)
 	free(gh);
 }
 
-
 static int init_battlefield(battlefield_t **battlefield, int row_num, int col_num)
 {
 	battlefield_t **bf=battlefield;
@@ -715,8 +706,6 @@ int init_minesweeper(minesweeper_t **minesweeper)
 	return MSR_FAILED;
 	
 }
-
-
 
 static void clear_minesweeper()
 {
@@ -944,6 +933,7 @@ static int deal_btn1_event(grid_t *grid, minesweeper_t *minesweeper)
 	}
 	return MSR_SUCCESS;
 }
+
 static int deal_btn2_event(grid_t *grid, minesweeper_t *minesweeper)
 {
 	grid_t *gd=grid;
@@ -1187,9 +1177,7 @@ MEVENT mouse_event(battlefield_t *battlefield)
 				}else{
 					mevent.x=MOUSE_NON_VALID_X;
 					mevent.y=MOUSE_NON_VALID_Y;
-				}
-				
-				
+				}		
 			}
 		}
 	}
