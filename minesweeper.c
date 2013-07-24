@@ -661,7 +661,7 @@ int init_minesweeper(minesweeper_t **minesweeper)
 {
 	minesweeper_t **msr=minesweeper;
 	int ret;
-	if(NULL==*msr){
+	if(NULL!=*msr){
 		exit_minesweeper(*msr);
 		*msr=NULL;
 	}
