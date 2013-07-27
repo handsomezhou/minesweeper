@@ -7,9 +7,9 @@ HEADERS=$(wildcard *.h)
 OBJFILES=$(SOURCES:%.c=%.o)
 all:clean $(TARGET)
 $(TARGET):$(OBJFILES)
-	$(CROSS_COMPILE)gcc $(LD_FLAGS) -o $@ $^
+	$(CROSS_COMPILE)gcc $^ -o $@ $(LD_FLAGS)
 $(OBJFILES):%.o:%.c $(HEADERS)
-	$(CROSS_COMPILE)gcc $(C_FLAGS) -c -o $@ $<
+	$(CROSS_COMPILE)gcc $(C_FLAGS) -c $< -o $@
 
 clean:
 	@echo Removing files
