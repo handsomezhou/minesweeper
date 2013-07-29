@@ -1,3 +1,7 @@
+/**
+  *  Copyright (C) 2013  Handsome Zhou
+  */
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
